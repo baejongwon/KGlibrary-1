@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kg.library_1.donate.DonateMapper">
+	<select id="donateForm">
+		<choose>
+			<when test="select == 'select'">
+				SELECT B.* FROM (
+				SELECT ROW_NUMBER() OVER (ORDER BY no DESC) as r, A.* FROM (
+				SELECT * FROM book_donate WHERE id LIKE CONCAT('%', #{search}, '%') ORDER
+				BY no DESC
+				) A
+				) B WHERE B.r BETWEEN #{begin} AND #{end}
+			</when>
+			<otherwise>
+				SELECT B.* FROM (
+				SELECT ROW_NUMBER() OVER (ORDER BY no DESC) as r, A.* FROM (
+				SELECT * FROM book_donate ORDER BY no DESC
+				) A
+				) B WHERE B.r BETWEEN #{begin} AND #{end}
+			</otherwise>
+		</choose> 
+	</select>
+
+	<insert id="donateWriteProc">
+		<selectKey order="BEFORE" keyProperty="no" resultType="int">
+			SELECT COALESCE(max(no), 0)+1 FROM book_donate
+		</selectKey>
+		INSERT INTO book_donate (no, id, subject, book_no, method, content,
+		reg_date) VALUES(#{no}, #{id}, #{subject}, #{book_no}, #{method}, #{content},
+		#{reg_date})
+	</insert>
+
+    <select id="totalCount">
+    	<choose>
+    		<when test="select == 'select'">
+    			select count(no) from book_donate where id like CONCAT('%', #{search}, '%') 		
+    		</when>
+    		<otherwise>
+    			select count(no) from book_donate
+    		</otherwise>
+    	</choose>
+    </select>
+    
+    <select id = "donateContent">
+    	SELECT * FROM book_donate WHERE no=${no}
+    </select>
+    
+    <delete id ="donateDeleteProc">
+    	DELETE FROM book_donate WHERE no=${no}
+    </delete>
+</mapper>

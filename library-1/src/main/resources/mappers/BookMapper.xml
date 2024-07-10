@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.kg.library_1.book.IBookMapper">
+
+	<insert id="bookRegistProc">
+		<selectKey order="BEFORE" keyProperty="no" resultType="int">
+			SELECT COALESCE(MAX(no), 0) + 1 FROM book
+		</selectKey>
+		INSERT INTO book (category, title_info, author_info, pub_info,
+		pub_year_info, reg_date, detail_link, image, borrowperson,
+		book_count, donation, borrowdate, rentaldate, hitbook)
+		VALUES (
+		#{category}, #{title_info}, #{author_info}, #{pub_info},
+		#{pub_year_info}, #{reg_date}, #{detail_link}, #{image}, #{borrowperson},
+		#{book_count}, #{donation}, #{borrowdate}, #{rentaldate}, #{hitbook}
+		)
+	</insert>
+
+	<select id="totalCount">
+		<choose>
+			<when test="select == 'title'">
+				SELECT COUNT(no) FROM book WHERE title_info LIKE CONCAT('%', #{search},
+				'%')
+			</when>
+			<when test="select == 'author'">
+				SELECT COUNT(no) FROM book WHERE author_info LIKE CONCAT('%', #{search},
+				'%')
+			</when>
+			<when test="select == 'category'">
+				SELECT COUNT(no) FROM book WHERE category LIKE CONCAT('%', #{search}, '%')
+			</when>
+			<otherwise>
+				SELECT COUNT(no) FROM book
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="bookForm" resultType="com.kg.library_1.book.BookDTO">
+		<choose>
+			<when test="select == 'title'">
+				SELECT B.* FROM (
+				SELECT ROW_NUMBER() OVER (ORDER BY no DESC) as r, A.* FROM (
+				SELECT * FROM book WHERE title_info LIKE CONCAT('%', #{search}, '%') ORDER
+				BY no DESC
+				) A
+				) B WHERE B.r BETWEEN #{begin} AND #{end}
+			</when>
+			<when test="select == 'author'">
+				SELECT B.* FROM (
+				SELECT ROW_NUMBER() OVER (ORDER BY no DESC) as r, A.* FROM (
+				SELECT * FROM book WHERE author_info LIKE CONCAT('%', #{search}, '%')
+				ORDER BY no DESC
+				) A
+				) B WHERE B.r BETWEEN #{begin} AND #{end}
+			</when>
+			<when test="select == 'category'">
+				SELECT B.* FROM (
+				SELECT ROW_NUMBER() OVER (ORDER BY no DESC) as r, A.* FROM (
+				SELECT * FROM book WHERE category LIKE CONCAT('%', #{search}, '%') ORDER
+				BY no DESC
+				) A
+				) B WHERE B.r BETWEEN #{begin} AND #{end}
+			</when>
+			<otherwise>
+				SELECT B.* FROM (
+				SELECT ROW_NUMBER() OVER (ORDER BY no DESC) as r, A.* FROM (
+				SELECT * FROM book ORDER BY no DESC
+				) A
+				) B WHERE B.r BETWEEN #{begin} AND #{end}
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="bookContent"
+		resultType="com.kg.library_1.book.BookDTO">
+		SELECT * FROM book WHERE no=#{n}
+	</select>
+
+	<update id="rentalProc">
+		UPDATE book SET borrowperson=#{sessionId}, borrowdate=#{borrowtime},
+		rentaldate=#{rentaldate} WHERE no=#{n}
+	</update>
+
+	<update id="returnProc">
+		UPDATE book SET borrowperson=#{borrowperson} WHERE no=#{n}
+	</update>
+
+	<delete id="bookDeleteProc">
+		DELETE FROM book WHERE no=#{n}
+	</delete>
+
+	<select id="myBook" resultType="com.kg.library_1.book.BookDTO">
+		SELECT book.* FROM book WHERE borrowperson = #{id}
+	</select>
+
+	<update id="borrowDateExtend">
+		UPDATE book SET rentaldate = #{rentaldate} WHERE no=#{n} AND borrowperson =
+		#{sessionId}
+	</update>
+
+	<update id="returnProc2">
+		UPDATE book SET borrowperson=#{borrowperson} WHERE no=#{n}
+	</update>
+
+	<select id="hitbooks" resultType="com.kg.library_1.book.BookDTO">
+		SELECT * FROM book WHERE hitbook = 'yes' AND book_count = 1 ORDER BY no DESC
+		LIMIT 3
+	</select>
+
+	<select id="newbooks" resultType="com.kg.library_1.book.BookDTO">
+		SELECT * FROM book WHERE book_count = 1 ORDER BY reg_date DESC LIMIT 3
+	</select>
+
+
+
+
+	<!-- <insert id="bookRegistProc" useGeneratedKeys="true" keyProperty="no"> 
+		INSERT INTO book (category, title_info, author_info, pub_info, pub_year_info, 
+		reg_date, detail_link, image, borrowperson, book_count, donation, borrowdate, 
+		rentaldate, hitbook) VALUES (#{category}, #{title_info}, #{author_info}, 
+		#{pub_info}, #{pub_year_info}, #{reg_date}, #{detail_link}, #{image}, #{borrowperson}, 
+		#{book_count}, #{donation}, #{borrowdate}, #{rentaldate}, #{hitbook}) </insert> 
+		<select id="totalCount" resultType="int"> SELECT COUNT(no) FROM book <choose> 
+		<when test="select == 'title'"> WHERE title_info LIKE CONCAT('%', #{search}, 
+		'%') </when> <when test="select == 'author'"> WHERE author_info LIKE CONCAT('%', 
+		#{search}, '%') </when> <when test="select == 'category'"> WHERE category 
+		LIKE CONCAT('%', #{search}, '%') </when> </choose> </select> <select id="bookForm" 
+		resultType="com.kg.library_1.book.BookDTO"> SELECT B.* FROM ( SELECT ROW_NUMBER() 
+		OVER (ORDER BY no DESC) as r, A.* FROM ( SELECT * FROM book <choose> <when 
+		test="select == 'title'"> WHERE title_info LIKE CONCAT('%', #{search}, '%') 
+		</when> <when test="select == 'author'"> WHERE author_info LIKE CONCAT('%', 
+		#{search}, '%') </when> <when test="select == 'category'"> WHERE category 
+		LIKE CONCAT('%', #{search}, '%') </when> </choose> ORDER BY no DESC ) A ) 
+		B WHERE B.r BETWEEN #{begin} AND #{end} </select> <select id="bookContent" 
+		resultType="com.kg.library_1.book.BookDTO"> SELECT * FROM book WHERE no = 
+		#{n} </select> <update id="rentalProc"> UPDATE book SET borrowperson = #{sessionId}, 
+		borrowdate = #{borrowtime}, rentaldate = #{rentaldate} WHERE no = #{n} </update> 
+		<update id="returnProc"> UPDATE book SET borrowperson = #{borrowperson} WHERE 
+		no = #{n} </update> <delete id="bookDeleteProc"> DELETE FROM book WHERE no 
+		= #{n} </delete> <select id="myBook" resultType="com.kg.library_1.book.BookDTO"> 
+		SELECT * FROM book WHERE borrowperson = #{id} </select> <update id="borrowDateExtend"> 
+		UPDATE book SET rentaldate = #{rentaldate} WHERE no = #{n} AND borrowperson 
+		= #{sessionId} </update> <update id="returnProc2"> UPDATE book SET borrowperson 
+		= #{borrowperson} WHERE no = #{n} </update> <select id="hitbooks" resultType="com.kg.library_1.book.BookDTO"> 
+		SELECT * FROM book WHERE hitbook = 'yes' AND book_count = 1 ORDER BY no DESC 
+		LIMIT 3 </select> <select id="newbooks" resultType="com.kg.library_1.book.BookDTO"> 
+		SELECT * FROM book WHERE book_count = 1 ORDER BY reg_date DESC LIMIT 3 </select> -->
+</mapper>
+
+<!-- <insert id="bookRegistProc"> <selectKey order="BEFORE" keyProperty="no" 
+	resultType="int"> SELECT NVL(max(no),0)+1 FROM book </selectKey> INSERT INTO 
+	book VALUES(#{no}, #{category}, #{title_info}, #{author_info}, #{pub_info}, 
+	#{pub_year_info}, #{reg_date}, #{detail_link}, #{image}, #{borrowperson}, 
+	#{book_count}, #{donation}, #{borrowdate}, #{rentaldate}, #{hitbook}) </insert> 
+	<select id="totalCount"> <choose> <when test="select == 'title'"> SELECT 
+	count(no) FROM book WHERE title_info like '%'||#{search}||'%' </when> <when 
+	test="select == 'author'"> SELECT count(no) FROM book WHERE author_info like 
+	'%'||#{search}||'%' </when> <when test="select == 'category'"> SELECT count(no) 
+	FROM book WHERE category like '%'||#{search}||'%' </when> <otherwise> SELECT 
+	count(no) FROM book </otherwise> </choose> </select> <select id="bookForm" 
+	resultType="com.kg.library_1.book.BookDTO"> <choose> <when test="select == 
+	'title'"> SELECT B.* FROM ( SELECT ROWNUM as r, A.* FROM ( SELECT book.* 
+	FROM book WHERE title_info like '%'||#{search}||'%' ORDER BY no DESC)A )B 
+	WHERE B.r BETWEEN #{begin} AND #{end} </when> <when test="select == 'author'"> 
+	SELECT B.* FROM ( SELECT ROWNUM as r, A.* FROM ( SELECT book.* FROM book 
+	WHERE author_info like '%'||#{search}||'%' ORDER BY no DESC)A )B WHERE B.r 
+	BETWEEN #{begin} AND #{end} </when> <when test="select == 'category'"> SELECT 
+	B.* FROM ( SELECT ROWNUM as r, A.* FROM ( SELECT book.* FROM book WHERE category 
+	like '%'||#{search}||'%' ORDER BY no DESC)A )B WHERE B.r BETWEEN #{begin} 
+	AND #{end} </when> <otherwise> SELECT B.* FROM ( SELECT ROWNUM as r, A.* 
+	FROM ( SELECT book.* FROM book ORDER BY no DESC)A )B WHERE B.r BETWEEN #{begin} 
+	AND #{end} </otherwise> </choose> </select> <select id="bookContent" resultType="com.kg.library_1.book.BookDTO"> 
+	SELECT * FROM book WHERE no=#{n} </select> <update id="rentalProc"> UPDATE 
+	book SET borrowperson=#{sessionId}, borrowdate=#{borrowtime}, rentaldate=#{rentaldate} 
+	WHERE no=#{n} </update> <update id="returnProc"> UPDATE book SET borrowperson=#{borrowperson} 
+	WHERE no=#{n} </update> <delete id="bookDeleteProc"> DELETE FROM book WHERE 
+	no=#{n} </delete> <select id="myBook" resultType="com.kg.library_1.book.BookDTO"> 
+	SELECT book.* FROM book WHERE borrowperson = #{id} </select> <update id="borrowDateExtend"> 
+	UPDATE book SET rentaldate = #{rentaldate} WHERE no=#{n} AND borrowperson 
+	= #{sessionId} </update> <update id="returnProc2"> UPDATE book SET borrowperson=#{borrowperson} 
+	WHERE no=#{n} </update> <select id="hitbooks"> select A.* From (select * 
+	from book WHERE hitbook = 'yes' and book_count= 1 ORDER BY no DESC)A where 
+	<![CDATA[rownum < 4 ]]> </select> <select id="newbooks"> select A.* From 
+	(select * from book WHERE book_count= 1 ORDER BY reg_date DESC)A where <![CDATA[rownum 
+	< 4 ]]> </select> -->
+

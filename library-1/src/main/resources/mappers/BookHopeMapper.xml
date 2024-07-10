@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.kg.library_1.bookHope.IBookHopeMapper">
+
+
+	<insert id="bookHopeRegistProc" useGeneratedKeys="true"
+		keyProperty="no">
+		<selectKey order="BEFORE" keyProperty="no" resultType="int">
+			SELECT COALESCE(MAX(no), 0) + 1 FROM bookHope
+		</selectKey>
+		INSERT INTO bookHope (no, board_title, hope_user, category,
+		title_info,
+		author_info, pub_info, pub_year_info, reason, hopedate)
+		VALUES (#{no}, #{board_title}, #{hope_user}, #{category},
+		#{title_info},
+		#{author_info}, #{pub_info}, #{pub_year_info},
+		#{reason}, #{hopedate})
+	</insert>
+
+	<select id="totalCount" resultType="int">
+		SELECT COUNT(no) FROM bookHope
+		<where>
+			<choose>
+				<when test="select == 'board_title'">
+					AND title_info LIKE CONCAT('%', #{search}, '%')
+				</when>
+				<when test="select == 'hope_user'">
+					AND hope_user LIKE CONCAT('%', #{search}, '%')
+				</when>
+			</choose>
+		</where>
+	</select>
+
+
+	<select id="bookHopeForm"
+		resultType="com.kg.library_1.bookHope.BookHopeDTO">
+		SELECT B.* FROM (
+		SELECT ROW_NUMBER() OVER (ORDER BY no DESC) as r, A.*
+		FROM (
+		SELECT * FROM bookHope
+		<where>
+			<choose>
+				<when test="select == 'board_title'">
+					AND board_title LIKE CONCAT('%', #{search}, '%')
+				</when>
+				<when test="select == 'hope_user'">
+					AND hope_user LIKE CONCAT('%', #{search}, '%')
+				</when>
+			</choose>
+		</where>
+		ORDER BY no DESC
+		) A
+		) B WHERE B.r BETWEEN #{begin} AND #{end}
+	</select>
+
+
+	<select id="bookHopeContent"
+		resultType="com.kg.library_1.bookHope.BookHopeDTO">
+		SELECT * FROM bookHope WHERE no = #{n}
+	</select>
+
+	<delete id="bookHopeDeleteProc">
+		DELETE FROM bookHope WHERE no = #{n}
+	</delete>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</mapper>
+<!-- <insert id="bookHopeRegistProc"> <selectKey order="BEFORE" keyProperty="no" 
+	resultType="int"> SELECT NVL(max(no),0)+1 FROM bookHope </selectKey> INSERT 
+	INTO bookHope VALUES(#{no},#{board_title}, #{hope_user}, #{category}, #{title_info}, 
+	#{author_info}, #{pub_info}, #{pub_year_info}, #{reason},#{hopedate}) </insert> 
+	<select id="totalCount"> <choose> <when test="select == 'board_title'"> SELECT 
+	count(no) FROM bookHope WHERE title_info like '%'||#{search}||'%' </when> 
+	<when test="select == 'hope_user'"> SELECT count(no) FROM bookHope WHERE 
+	hope_user like '%'||#{search}||'%' </when> <otherwise> SELECT count(no) FROM 
+	bookHope </otherwise> </choose> </select> <select id="bookHopeForm" resultType="com.kg.library_1.bookHope.BookHopeDTO"> 
+	<choose> <when test="select == 'board_title'"> SELECT B.* FROM ( SELECT ROWNUM 
+	as r, A.* FROM ( SELECT bookHope.* FROM bookHope WHERE board_title like '%'||#{search}||'%' 
+	ORDER BY no DESC)A )B WHERE B.r BETWEEN #{begin} AND #{end} </when> <when 
+	test="select == 'hope_user'"> SELECT B.* FROM ( SELECT ROWNUM as r, A.* FROM 
+	( SELECT bookHope.* FROM bookHope WHERE hope_user like '%'||#{search}||'%' 
+	ORDER BY no DESC)A )B WHERE B.r BETWEEN #{begin} AND #{end} </when> <otherwise> 
+	SELECT B.* FROM ( SELECT ROWNUM as r, A.* FROM ( SELECT bookHope.* FROM bookHope 
+	ORDER BY no DESC)A )B WHERE B.r BETWEEN #{begin} AND #{end} </otherwise> 
+	</choose> </select> <select id="bookHopeContent" resultType="com.kg.library_1.bookHope.BookHopeDTO"> 
+	SELECT * FROM bookHope WHERE no=#{n} </select> <delete id="bookHopeDeleteProc"> 
+	DELETE FROM bookHope WHERE no=#{n} </delete> -->
+
