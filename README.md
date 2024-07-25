@@ -36,7 +36,6 @@ AWS : EC2 / RDS / Load Balancer / Auto Scaling Group / S3 / ECR / EKS
   
   [관리자]
   - 국립중앙도서관에서 등록된 도서 정보를 가져와 게시글 등록
-  - 
 
   ### 도서기증(donateguide)
   [사용자]
